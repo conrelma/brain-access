@@ -1,0 +1,28 @@
+name: Request access
+description: Ask for access to one or more Brains.
+title: "Access request"
+labels: ["access-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This page is public and your request stays visible. Write only your name and which Brain you need. No personal or company details.
+  - type: checkboxes
+    id: brains
+    attributes:
+      label: Which Brains do you need?
+      options:
+        - label: finance (work, finance team)
+        - label: fleet (personal, agent fleet notes)
+  - type: input
+    id: who
+    attributes:
+      label: Your name
+    validations:
+      required: true
+  - type: input
+    id: why
+    attributes:
+      label: Why, in one line
+    validations:
+      required: true
