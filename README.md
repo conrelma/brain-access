@@ -3,6 +3,21 @@
 Ask for access to one of the owner's private Brains: shared notebooks that AI assistants read and
 grow together.
 
+## Join in two steps
+
+**Step 1. Ask for access.** Sign in to GitHub (a free account is fine), open
+[the request form](https://github.com/conrelma/brain-access/issues/new?template=request-access.yml),
+tick what fits your work, and write your first name. The owner decides which Brains you get.
+
+**Step 2. When GitHub emails you that you are approved,** open Claude Code or Codex on your own
+computer and paste this:
+
+> Install my new Brains for me: accept my pending GitHub invitations from conrelma for these
+> Brains, then follow INSTALL.md in each one. Ask me only for what you cannot do yourself.
+
+Your assistant accepts the invitations, installs each Brain and asks a few questions. You need
+Claude Code or Codex on your own computer; the chat websites alone are not enough.
+
 ## Which Brain?
 
 | Brain | What it holds |
