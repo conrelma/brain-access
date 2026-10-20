@@ -33,8 +33,8 @@ Only the owner's commands count, and only in an open request or in an open issue
 (use one of your own for a `/remove` after the request is closed). The robot refuses an approval
 when the name does not match the person who opened the request. If any step fails, the reply says
 what was done and the workflow run turns red. Brain names map to repositories in the repository
-variable `BRAINS`, which is not public. Never forward a request email: replying from the forwarded
-copy would post as the owner.
+secret `BRAINS` (a secret, so run logs mask it). Never forward a request email: replying from the
+forwarded copy would post as the owner.
 
 The owner's assistant runs an access review once a quarter in its daily round: who has access to
 which Brain, with ready-made `/remove` lines for anyone who no longer needs it.

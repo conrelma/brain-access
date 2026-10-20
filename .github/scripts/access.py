@@ -11,9 +11,9 @@ Commands (first non-empty line of the owner's comment on an access request):
 
 Commands act only on an open issue with the access-request label, or an open issue the owner
 opened. The workflow runs this only for comments by the owner, and it is checked again here. Brain
-names map to repositories in the BRAINS repository variable, e.g. {"finance": "conrelma/repo"};
-repository names are never written into this public repository. If BRAINS is malformed, no command
-acts.
+names map to repositories in the BRAINS repository secret, e.g. {"finance": "conrelma/repo"}: a
+secret, not a variable: run logs show each step's env and mask only secrets. Repository names are never
+written into this public repository. If BRAINS is unset or malformed, no command acts.
 
 Error replies and log lines never include GitHub's error text (it can name a private repository):
 only the Brain name and the HTTP status. Any failed gh step makes the run exit 1 (red).

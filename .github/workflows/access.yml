@@ -53,4 +53,4 @@ jobs:
           COMMENT_AUTHOR_ID: ${{ github.event.comment.user.id }}
           COMMENT_AUTHOR_ASSOCIATION: ${{ github.event.comment.author_association }}
           BODY: ${{ github.event.comment.body }}
-          BRAINS: ${{ vars.BRAINS }}
+          BRAINS: ${{ secrets.BRAINS }}
