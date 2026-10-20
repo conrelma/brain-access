@@ -7,13 +7,15 @@ Commands (first non-empty line of the owner's comment on an access request):
                                 organization (GitHub ignores the permission on a personal-account
                                 repository and every collaborator can write, so it is refused there)
   /deny [reason]                close the request politely
-  /remove <github-name> finance remove that person from those Brains (and cancel invitations)
+  /remove [@]<github-name> finance  remove that person from those Brains (and cancel invitations)
+Brains are always named one by one: there is no "all", so a reply never lists every Brain.
 
 Commands act only on an open issue with the access-request label, or an open issue the owner
 opened. The workflow runs this only for comments by the owner, and it is checked again here. Brain
-names map to repositories in the BRAINS repository secret, e.g. {"finance": "conrelma/repo"}: a
-secret, not a variable: run logs show each step's env and mask only secrets. Repository names are never
-written into this public repository. If BRAINS is unset or malformed, no command acts.
+names map to repositories in the BRAINS repository secret, e.g. {"finance": "conrelma/repo"}. The
+secret keeps the value out of the step's env listing in the public run log, and this script never
+prints gh output or BRAINS values. Repository names are never written into this public repository.
+If BRAINS is unset or malformed, no command acts.
 
 Error replies and log lines never include GitHub's error text (it can name a private repository):
 only the Brain name and the HTTP status. Any failed gh step makes the run exit 1 (red).
@@ -54,20 +56,19 @@ def parse(body, keys):
         login, rest = rest[0][1:], rest[1:]
         perm = "pull" if rest and rest[-1].lower() == "read" else "push"
         names = [w.lower() for w in (rest[:-1] if perm == "pull" else rest)]
-        names = sorted(keys) if names == ["all"] else names
         bad = [n for n in names if n not in keys]
         if not names or bad:
             return None, "unknown or missing Brain name: " + ", ".join(bad or ["(none)"])
         return "approve", {"login": login, "brains": names, "perm": perm}
     if cmd == "/remove":
-        if len(rest) < 2 or not USER.fullmatch(rest[0]):
+        user = rest[0][1:] if rest and rest[0].startswith("@") else (rest[0] if rest else "")
+        if len(rest) < 2 or not USER.fullmatch(user):
             return None, "use: /remove <github-name> <brain> [<brain> ...]"
         names = [w.lower() for w in rest[1:]]
-        names = sorted(keys) if names == ["all"] else names
         bad = [n for n in names if n not in keys]
         if bad:
             return None, "unknown Brain name: " + ", ".join(bad)
-        return "remove", {"user": rest[0], "brains": names}
+        return "remove", {"user": user, "brains": names}
     return None, "unknown command"
 
 
@@ -198,8 +199,8 @@ def command():
             ok, _, err = gh(f"remove {name}", "api", "-X", "DELETE", f"repos/{repo}/collaborators/{user}",
                             "--silent", token=admin, ok404=True)  # 404: was not a collaborator
             errs += [] if ok else [err]
-            ok, out, err = gh(f"list invitations {name}", "api", f"repos/{repo}/invitations", "--jq",
-                              f'.[] | select((.invitee.login|ascii_downcase) == "{user.lower()}") | .id',
+            ok, out, err = gh(f"list invitations {name}", "api", "--paginate", f"repos/{repo}/invitations",
+                              "--jq", f'.[] | select((.invitee.login|ascii_downcase) == "{user.lower()}") | .id',
                               token=admin)
             errs += [] if ok else [err]
             for inv in (out.split() if ok else []):
@@ -248,7 +249,9 @@ def selftest():
     assert parse("/approve @bob finance read", keys)[1]["perm"] == "pull"
     assert parse("/approve @bob fleet READ", keys)[1] == {"login": "bob", "brains": ["fleet"], "perm": "pull"}
     assert parse("/approve @bob read", keys)[0] is None                  # read alone names no Brain
-    assert parse("/Approve @bob ALL", keys)[1]["brains"] == ["finance", "fleet", "kit"]
+    assert parse("/Approve @bob FINANCE", keys)[1]["brains"] == ["finance"]
+    assert parse("/approve @bob all", keys)[0] is None                   # no "all": names one by one
+    assert parse("/remove bob all", keys)[0] is None
     assert parse("/approve finance", keys)[0] is None                    # @login required
     assert parse("/approve @bob", keys)[0] is None
     assert parse("/approve @bob payroll", keys)[0] is None
@@ -257,6 +260,9 @@ def selftest():
     assert parse("\n\n/approve @bob fleet\n> quoted email", keys)[1]["brains"] == ["fleet"]  # blank first
     assert parse("/deny not now", keys) == ("deny", {"reason": "not now"})
     assert parse("/remove 949BFN fleet", keys) == ("remove", {"user": "949BFN", "brains": ["fleet"]})
+    assert parse("/remove @949BFN fleet", keys) == ("remove", {"user": "949BFN", "brains": ["fleet"]})
+    assert parse("/remove @ fleet", keys)[0] is None
+    assert parse("/remove", keys)[0] is None
     assert parse("/remove bad$user fleet", keys)[0] is None
     assert parse("/remove someone", keys)[0] is None
     assert parse("thanks!", keys)[0] is None
@@ -301,6 +307,21 @@ def selftest():
     assert not any("issue edit" in x for x in c) and FAILED == ["lock (HTTP 500)"]
     c = run_fake({}, "/remove bob fleet", [("collaborators/bob", 1, "")])  # 5: removal fails
     assert "Could NOT remove from: fleet (HTTP 500)" in c[-1] and FAILED == ["remove fleet (HTTP 500)"]
+    c = run_fake({}, "/remove @bob fleet", [("invitations --jq", 0, "123\nnot-an-id\n456\n")])
+    assert any("--paginate repos/conrelma/y-brain/invitations --jq" in x for x in c)
+    assert [x.split()[3] for x in c if "/invitations/" in x] == \
+        ["repos/conrelma/y-brain/invitations/123", "repos/conrelma/y-brain/invitations/456"]
+    assert "Removed bob from: fleet" in c[-1] and not FAILED
+    c = run_fake({}, "/approve @alice finance")                          # not the requester
+    assert len(c) == 1 and "@alice did not open this request (@bob did)" in c[0]
+    c = run_fake({"ISSUE_AUTHOR_TYPE": "Bot"}, "/approve @bob finance")
+    assert len(c) == 1 and "not a normal GitHub user" in c[0]
+    c = run_fake({"ADMIN_TOKEN": ""}, "/approve @bob finance")
+    assert len(c) == 1 and "no access token" in c[0]
+    c = run_fake({}, "/approve @bob finance fleet", [("y-brain/collaborators", 1, "")])  # partial approve
+    assert "Approved for @bob (write): finance. Could not add: fleet (HTTP 500)." in c[-1]
+    assert not any(x.startswith(("issue close", "issue lock")) for x in c)   # request stays open
+    assert FAILED == ["invite fleet (HTTP 500)"]
     del FAILED[:]
     print("selftest ok")
 

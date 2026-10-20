@@ -27,14 +27,18 @@ the requester's GitHub name in the email's sender line, not the name they typed.
 | `/approve @their-github-name finance fleet` | Invites them to those Brains with write access (the normal choice: their assistant can open issues and pull requests) |
 | `/approve @their-github-name fleet read` | Invites them with read-only access. Works only for a Brain owned by an organization. For a Brain on a personal account the robot refuses, because GitHub gives every collaborator there write access |
 | `/deny` (optional reason) | Closes the request politely |
-| `/remove their-github-name finance` | Removes them from those Brains, including open invitations |
+| `/remove their-github-name finance` | Removes them from those Brains, including open invitations (a leading `@` is fine) |
 
 Only the owner's commands count, and only in an open request or in an open issue the owner opened
 (use one of your own for a `/remove` after the request is closed). The robot refuses an approval
-when the name does not match the person who opened the request. If any step fails, the reply says
-what was done and the workflow run turns red. Brain names map to repositories in the repository
-secret `BRAINS` (a secret, so run logs mask it). Never forward a request email: replying from the
-forwarded copy would post as the owner.
+when the name does not match the person who opened the request. Name each Brain: there is no
+`all`. If any step fails, the workflow run turns red. The reply lists the invitations and removals
+done; a red run after a normal reply means a later step, such as closing or locking, failed.
+
+Brain names map to repositories in the repository secret `BRAINS`. The secret keeps the value out
+of the step's settings list in the public run log, and the robot never prints GitHub's answers or
+the `BRAINS` value. Never forward a request email: replying from the forwarded copy would post as
+the owner.
 
 The owner's assistant runs an access review once a quarter in its daily round: who has access to
 which Brain, with ready-made `/remove` lines for anyone who no longer needs it.
