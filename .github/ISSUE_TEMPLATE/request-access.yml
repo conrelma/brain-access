@@ -6,23 +6,17 @@ body:
   - type: markdown
     attributes:
       value: |
-        This page is public and your request stays visible. Write only your name and which Brain you need. No personal or company details.
+        This page is public and your request stays visible. Write only your first name. Write nothing private: no personal or company details. GitHub keeps the edit history of a public issue, so editing it later does not hide anything.
   - type: checkboxes
     id: brains
     attributes:
       label: Which Brains do you need?
       options:
-        - label: finance (work, finance team)
-        - label: fleet (personal, agent fleet notes)
+        - label: finance
+        - label: fleet
   - type: input
-    id: who
+    id: name
     attributes:
-      label: Your name
-    validations:
-      required: true
-  - type: input
-    id: why
-    attributes:
-      label: Why, in one line
+      label: Your first name (so the owner knows who you are)
     validations:
       required: true

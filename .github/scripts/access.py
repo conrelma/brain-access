@@ -2,20 +2,25 @@
 
 Commands (first non-empty line of the owner's comment on an access request):
   /approve @login finance fleet invite the requester (@login must be the request's author) with
-                                write access to those Brains
-  /approve @login finance read  invite with read-only access
+                                write access to those Brains (the normal choice)
+  /approve @login finance read  invite with read-only access; only for Brains owned by an
+                                organization (GitHub ignores the permission on a personal-account
+                                repository and every collaborator can write, so it is refused there)
   /deny [reason]                close the request politely
   /remove <github-name> finance remove that person from those Brains (and cancel invitations)
 
-The workflow runs this only for comments by the owner (checked again here). Brain names map to
-repositories in the BRAINS repository variable, e.g. {"finance": "owner/repo", ...}; repository
-names are never written into this public repository.
+Commands act only on an open issue with the access-request label, or an open issue the owner
+opened. The workflow runs this only for comments by the owner, and it is checked again here. Brain
+names map to repositories in the BRAINS repository variable, e.g. {"finance": "conrelma/repo"};
+repository names are never written into this public repository. If BRAINS is malformed, no command
+acts.
 
-Error replies never include GitHub's error text (it can name a private repository): only the
-Brain name and the HTTP status.
+Error replies and log lines never include GitHub's error text (it can name a private repository):
+only the Brain name and the HTTP status. Any failed gh step makes the run exit 1 (red).
 
 Env: GH_TOKEN (this repo's issues), ADMIN_TOKEN (adds/removes collaborators), REPO, ISSUE,
-ISSUE_AUTHOR, ISSUE_AUTHOR_TYPE, BODY, BRAINS.
+ISSUE_STATE, ISSUE_LABELS (JSON list of names), ISSUE_AUTHOR, ISSUE_AUTHOR_ID, ISSUE_AUTHOR_TYPE,
+COMMENT_AUTHOR_ID, COMMENT_AUTHOR_ASSOCIATION, BODY, BRAINS.
 Usage: access.py command | access.py --selftest
 """
 import json
@@ -23,15 +28,21 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
 
+OWNER_ID = "6285991"
 USER = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
+BRAIN = re.compile(r"[a-z0-9-]{1,30}")
+BRAIN_REPO = re.compile(r"conrelma/[A-Za-z0-9._-]{1,100}")
+FAILED = []  # gh steps that failed (Brain name and HTTP status only); any one makes the run red
+
+
+def first_words(body):
+    return next((l.split() for l in (body or "").splitlines() if l.strip()), [])
 
 
 def parse(body, keys):
     """Return (command, info) or (None, error). keys: allowed Brain names."""
-    line = next((l.strip() for l in (body or "").splitlines() if l.strip()), "")
-    words = line.split()
+    words = first_words(body)
     if not words or not words[0].startswith("/"):
         return None, "not a command"
     cmd, rest = words[0].lower(), words[1:]
@@ -60,46 +71,89 @@ def parse(body, keys):
     return None, "unknown command"
 
 
+def load_brains(raw):
+    """The BRAINS mapping {name: "conrelma/repo"}, or None if it is unset or malformed."""
+    try:
+        brains = json.loads(raw or "")
+    except ValueError:
+        return None
+    if not isinstance(brains, dict) or not brains:
+        return None
+    for name, repo in brains.items():
+        if not (isinstance(repo, str) and BRAIN.fullmatch(name) and BRAIN_REPO.fullmatch(repo)
+                and repo.split("/")[1] not in (".", "..")):
+            return None
+    return brains
+
+
+def is_access_request(state, labels_json, author_id):
+    """Open, and labelled access-request (set by the request form) or opened by the owner."""
+    try:
+        labels = json.loads(labels_json or "[]")
+    except ValueError:
+        labels = []
+    labelled = isinstance(labels, list) and "access-request" in labels
+    return state == "open" and (labelled or author_id == OWNER_ID)
+
+
 def status(err):
     """Only the HTTP status from a gh error, never the text (it can name a private repository)."""
     m = re.search(r"HTTP \d{3}", err or "")
     return m.group(0) if m else "error"
 
 
-def gh(*args, token=None):
+def gh(step, *args, token=None, ok404=False):
+    """Run gh; return (ok, stdout, status). A failure is noted as `step`, which names no repository."""
     env = dict(os.environ)
     if token:
         env["GH_TOKEN"] = token
     r = subprocess.run(["gh", *args], capture_output=True, text=True, env=env)
-    return r.returncode, r.stdout, status(r.stderr)
+    err = status(r.stderr)
+    ok = r.returncode == 0 or (ok404 and err == "HTTP 404")
+    if not ok:
+        FAILED.append(f"{step} ({err})")
+    return ok, r.stdout, err
 
 
 def reply(text):
-    gh("issue", "comment", os.environ["ISSUE"], "-R", os.environ["REPO"], "--body", text)
+    gh("reply", "issue", "comment", os.environ["ISSUE"], "-R", os.environ["REPO"], "--body", text)
 
 
-def finish(summary, reason):
-    """Replace the public request text with a one-line outcome, close and lock it."""
+def finish(reason):
+    """Close and lock the request. Its text is left alone: GitHub keeps the edit history of a public
+    issue, so editing it would hide nothing."""
     n, repo = os.environ["ISSUE"], os.environ["REPO"]
-    gh("issue", "edit", n, "-R", repo, "--body", summary)
-    gh("issue", "close", n, "-R", repo, "--reason", reason)
-    gh("issue", "lock", n, "-R", repo, "--reason", "resolved")
+    gh("close", "issue", "close", n, "-R", repo, "--reason", reason)
+    gh("lock", "issue", "lock", n, "-R", repo, "--reason", "resolved")
 
 
 def command():
-    brains = json.loads(os.environ.get("BRAINS") or "{}")
-    admin = os.environ.get("ADMIN_TOKEN", "")
-    cmd, info = parse(os.environ.get("BODY", ""), set(brains))
-    if cmd is None:
-        if info != "not a command":
-            reply(f"Command not done: {info}.")
+    if (os.environ.get("COMMENT_AUTHOR_ID") != OWNER_ID
+            or os.environ.get("COMMENT_AUTHOR_ASSOCIATION") != "OWNER"):
+        print("Ignored: not the owner's comment.")
         return
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    body = os.environ.get("BODY", "")
+    words = first_words(body)
+    if not words or not words[0].startswith("/"):
+        return
+    if not is_access_request(os.environ.get("ISSUE_STATE"), os.environ.get("ISSUE_LABELS"),
+                             os.environ.get("ISSUE_AUTHOR_ID")):
+        reply("Command not done: not an open access request.")
+        return
+    brains = load_brains(os.environ.get("BRAINS"))
+    if brains is None:
+        reply("Command not done: the BRAINS setting is invalid.")
+        return
+    cmd, info = parse(body, set(brains))
+    if cmd is None:
+        reply(f"Command not done: {info}.")
+        return
     if cmd == "deny":
         reply("Thank you for asking. This request is not approved." +
               (f" Reason: {info['reason']}" if info["reason"] else ""))
-        finish(f"Processed on {today}: not approved.", "not planned")
+        finish("not planned")
         return
+    admin = os.environ.get("ADMIN_TOKEN", "")
     if not admin:
         reply("Command not done: the robot has no access token yet (the owner must set BRAIN_ADMIN_TOKEN).")
         return
@@ -111,11 +165,22 @@ def command():
         if info["login"].lower() != who.lower():
             reply(f"Command not done: @{info['login']} did not open this request (@{who} did).")
             return
+        if info["perm"] == "pull":  # GitHub honours the permission only on organization repositories
+            for name in info["brains"]:
+                ok, out, err = gh(f"owner type {name}", "api", f"repos/{brains[name]}", "--jq",
+                                  ".owner.type", token=admin)
+                if not ok:
+                    reply(f"Command not done: could not check {name} ({err}).")
+                    return
+                if out.strip() != "Organization":
+                    reply("Command not done: read-only access needs the Brain to be in an organization;"
+                          " approve without 'read' for normal access.")
+                    return
         done, failed = [], []
         for name in info["brains"]:
-            code, _, err = gh("api", "-X", "PUT", f"repos/{brains[name]}/collaborators/{who}",
-                              "-f", f"permission={info['perm']}", "--silent", token=admin)
-            (done if code == 0 else failed).append(name if code == 0 else f"{name} ({err})")
+            ok, _, err = gh(f"invite {name}", "api", "-X", "PUT", f"repos/{brains[name]}/collaborators/{who}",
+                            "-f", f"permission={info['perm']}", "--silent", token=admin)
+            (done if ok else failed).append(name if ok else f"{name} ({err})")
         level = "read-only" if info["perm"] == "pull" else "write"
         msg = f"Approved for @{who} ({level}): {', '.join(done) or 'none'}."
         if failed:
@@ -124,34 +189,65 @@ def command():
                " assistant the install sentence from each Brain's front page."
         reply(msg)
         if done and not failed:
-            finish(f"Processed on {today}: @{who} approved for {', '.join(done)} ({level}).", "completed")
+            finish("completed")
         return
     if cmd == "remove":
         user, done, failed = info["user"], [], []
         for name in info["brains"]:
-            repo = brains[name]
-            code, _, err = gh("api", "-X", "DELETE", f"repos/{repo}/collaborators/{user}", "--silent",
+            repo, errs = brains[name], []
+            ok, _, err = gh(f"remove {name}", "api", "-X", "DELETE", f"repos/{repo}/collaborators/{user}",
+                            "--silent", token=admin, ok404=True)  # 404: was not a collaborator
+            errs += [] if ok else [err]
+            ok, out, err = gh(f"list invitations {name}", "api", f"repos/{repo}/invitations", "--jq",
+                              f'.[] | select((.invitee.login|ascii_downcase) == "{user.lower()}") | .id',
                               token=admin)
-            ok = code == 0 or err == "HTTP 404"  # 404: was not a collaborator
-            code2, out, err2 = gh("api", f"repos/{repo}/invitations", "--jq",
-                                  f'.[] | select((.invitee.login|ascii_downcase) == "{user.lower()}") | .id', token=admin)
-            ok = ok and code2 == 0
-            for inv in out.split():
-                c3, _, _ = gh("api", "-X", "DELETE", f"repos/{repo}/invitations/{inv}", "--silent",
-                              token=admin)
-                ok = ok and c3 == 0
-            (done if ok else failed).append(name if ok else f"{name} ({err if code else err2})")
+            errs += [] if ok else [err]
+            for inv in (out.split() if ok else []):
+                if not inv.isdigit():
+                    continue
+                ok, _, err = gh(f"cancel invitation {name}", "api", "-X", "DELETE",
+                                f"repos/{repo}/invitations/{inv}", "--silent", token=admin)
+                errs += [] if ok else [err]
+            (failed if errs else done).append(f"{name} ({errs[0]})" if errs else name)
         msg = f"Removed {user} from: {', '.join(done) or 'none'} (access and any open invitation)."
         if failed:
             msg += f" Could NOT remove from: {', '.join(failed)}. Check by hand."
         reply(msg)
 
 
+def run_fake(env, body, answers=()):
+    """Run command() against a stand-in for gh. answers: [(text in the gh call, exit code, stdout)].
+    Returns the gh calls made, each as one string."""
+    calls, real = [], subprocess.run
+
+    def fake(argv, **_):
+        line = " ".join(argv[1:])
+        calls.append(line)
+        rc, out = next(((rc, out) for key, rc, out in answers if key in line), (0, ""))
+        return subprocess.CompletedProcess(argv, rc, out, "gh: failed (HTTP 500)" if rc else "")
+
+    os.environ.update({
+        "COMMENT_AUTHOR_ID": OWNER_ID, "COMMENT_AUTHOR_ASSOCIATION": "OWNER", "REPO": "o/r",
+        "ISSUE": "7", "ISSUE_STATE": "open", "ISSUE_LABELS": '["access-request"]',
+        "ISSUE_AUTHOR": "bob", "ISSUE_AUTHOR_ID": "1", "ISSUE_AUTHOR_TYPE": "User", "ADMIN_TOKEN": "t",
+        "BRAINS": '{"finance": "conrelma/x-brain", "fleet": "conrelma/y-brain"}', **env, "BODY": body})
+    del FAILED[:]
+    subprocess.run = fake
+    try:
+        command()
+    finally:
+        subprocess.run = real
+    return calls
+
+
 def selftest():
     keys = {"finance", "fleet", "kit"}
+    # 1: write access by default, a last word "read" asks for read-only
     assert parse("/approve @Bob finance fleet", keys) == \
         ("approve", {"login": "Bob", "brains": ["finance", "fleet"], "perm": "push"})
     assert parse("/approve @bob finance read", keys)[1]["perm"] == "pull"
+    assert parse("/approve @bob fleet READ", keys)[1] == {"login": "bob", "brains": ["fleet"], "perm": "pull"}
+    assert parse("/approve @bob read", keys)[0] is None                  # read alone names no Brain
     assert parse("/Approve @bob ALL", keys)[1]["brains"] == ["finance", "fleet", "kit"]
     assert parse("/approve finance", keys)[0] is None                    # @login required
     assert parse("/approve @bob", keys)[0] is None
@@ -168,8 +264,48 @@ def selftest():
     assert parse("/approve @bob fleet\nsecond line ignored /approve @bob finance", keys)[1]["brains"] == ["fleet"]
     assert status('HTTP 404: Not Found (https://api.github.com/repos/o/secret-repo/x)') == "HTTP 404"
     assert status("dial tcp: lookup api.github.com/repos/o/secret-repo") == "error"
+
+    # 3: BRAINS must be a non-empty map of short names to conrelma repositories
+    assert load_brains('{"finance": "conrelma/x-brain", "my-fleet2": "conrelma/Y.brain_2"}') == \
+        {"finance": "conrelma/x-brain", "my-fleet2": "conrelma/Y.brain_2"}
+    for bad in ("", None, "not json", "[]", "{}", "null", '{"Finance": "conrelma/x"}',
+                '{"finance\\n": "conrelma/x"}', '{"a b": "conrelma/x"}', '{"' + "a" * 31 + '": "conrelma/x"}',
+                '{"finance": "someone/x"}', '{"finance": "conrelma/x/y"}', '{"finance": "conrelma/.."}',
+                '{"finance": "conrelma/"}', '{"finance": "conrelma/x\\n"}', '{"finance": 5}',
+                '{"finance": "conrelma/' + "x" * 101 + '"}', '{"ok": "conrelma/x", "bad": "other/y"}'):
+        assert load_brains(bad) is None, bad
+
+    # 4: only an open issue with the access-request label, or an open issue the owner opened
+    assert is_access_request("open", '[\n  "access-request"\n]', "1")
+    assert is_access_request("open", "[]", OWNER_ID)
+    assert not is_access_request("closed", '["access-request"]', OWNER_ID)
+    assert not is_access_request("open", '["bug"]', "1")
+    assert not is_access_request("open", "not json", "1")
+    assert not is_access_request(None, None, None)
+
+    # command() end to end, against a stand-in for gh
+    assert run_fake({"COMMENT_AUTHOR_ID": "1"}, "/deny") == []           # not the owner: silent
+    assert run_fake({}, "thanks, looks good") == []                      # not a command: silent
+    c = run_fake({"ISSUE_STATE": "closed"}, "/approve @bob finance")       # 4
+    assert len(c) == 1 and "not an open access request." in c[0]
+    c = run_fake({"ISSUE_LABELS": "[]"}, "/deny")                        # 4
+    assert len(c) == 1 and "not an open access request." in c[0]
+    c = run_fake({"BRAINS": '{"finance": "evil/x"}'}, "/deny")           # 3: acts on nothing
+    assert len(c) == 1 and "the BRAINS setting is invalid." in c[0]
+    c = run_fake({}, "/approve @bob finance read", [(".owner.type", 0, "User\n")])  # 1: personal repo
+    assert len(c) == 2 and "read-only access needs the Brain to be in an organization" in c[1]
+    c = run_fake({}, "/approve @bob finance fleet read", [(".owner.type", 0, "Organization\n")])
+    assert sum("permission=pull" in x for x in c) == 2 and not FAILED
+    c = run_fake({}, "/approve @bob finance", [("issue lock", 1, "")])     # 5: lock fails after invite
+    assert any("permission=push" in x for x in c) and any("issue comment" in x for x in c)
+    assert not any("issue edit" in x for x in c) and FAILED == ["lock (HTTP 500)"]
+    c = run_fake({}, "/remove bob fleet", [("collaborators/bob", 1, "")])  # 5: removal fails
+    assert "Could NOT remove from: fleet (HTTP 500)" in c[-1] and FAILED == ["remove fleet (HTTP 500)"]
+    del FAILED[:]
     print("selftest ok")
 
 
 if __name__ == "__main__":
     {"--selftest": selftest, "command": command}[sys.argv[1]]()
+    if FAILED:
+        sys.exit("Failed steps: " + "; ".join(FAILED))
