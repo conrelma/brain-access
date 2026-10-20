@@ -188,13 +188,13 @@ def command():
         if failed:
             msg += f" Could not add: {', '.join(failed)}."
         if done:
-            msg += ("\n\n**What to do next (about 5 minutes):**\n"
-                    "1. **Accept the invitation (or let your assistant do it during install).** GitHub has emailed you one"
-                    " invitation per Brain. Open each email and click **Accept**. You can also find them at"
-                    " github.com/notifications.\n"
-                    "2. **Open the Brain.** After you accept, GitHub shows the Brain's front page.\n"
-                    "3. **Install it.** Under **Install**, copy the one sentence and paste it into Claude Code"
-                    " or Codex on your own computer. Your assistant asks a few questions and does the rest.\n\n"
+            owner = os.environ.get("REPO", "/").split("/")[0]
+            msg += ("\n\n**Install (about 5 minutes):** open Claude Code or Codex on your own computer and"
+                    " paste this one sentence:\n\n"
+                    f"> Install my new Brains for me: accept my pending GitHub invitations from {owner} for these"
+                    f" Brains, then follow INSTALL.md in each one. Ask me only for what you cannot do yourself.\n\n"
+                    "Your assistant accepts the invitations, installs each Brain and asks a few questions. You can"
+                    " also accept the invitations yourself from GitHub's emails or github.com/notifications.\n\n"
                     "You need a free GitHub account (you have one) and Claude Code or Codex on your computer."
                     " The chat websites alone are not enough.")
         reply(msg)
