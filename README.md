@@ -3,6 +3,16 @@
 Ask for access to one of the owner's private Brains: shared notebooks that AI assistants read and
 grow together.
 
+## Which Brain?
+
+| Brain | What it holds |
+|---|---|
+| `finance` | Company finance recipes (X3 connection, statements, cash flow, dashboards) |
+| `fleet` | Running AI assistants at home and at work, including a Start here track for setting up your own assistant (personal Brain) |
+
+When a Brain is added, add its line here and its short name to the BRAINS secret (Brain Kit Recipe 1).
+Add the same line to the request form, `.github/ISSUE_TEMPLATE/request-access.yml`.
+
 ## How to ask
 
 1. Sign in to GitHub. (No account? Create one first at github.com.)
