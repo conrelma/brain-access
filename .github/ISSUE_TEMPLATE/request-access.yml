@@ -19,6 +19,7 @@ body:
         - label: "fleet: running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain)"
         - label: "yield: revenue management recipes (competitor fare tracking, yield and load factor methods)"
         - label: "data: company data sources (lakehouse, FlightAware, adsb.lol, QlikView, airport statistics, Reporting Data; how to connect, what is there, which source wins, reconciliation)"
+        - label: "general: how the company makes things (brand, documents and decks, meetings and polls, Microsoft 365 and Asana with an assistant, IT and Innovation, company laptop setup)"
   - type: input
     id: name
     attributes:

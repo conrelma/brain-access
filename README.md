@@ -11,6 +11,7 @@ grow together.
 | `fleet` | Running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain) |
 | `yield` | Revenue management recipes (competitor fare tracking, yield and load factor methods) |
 | `data` | Company data sources (lakehouse, FlightAware, adsb.lol, QlikView, airport statistics, Reporting Data): how to connect, what is there, which source wins, reconciliation |
+| `general` | How the company makes things (brand, documents and decks, meetings and polls, Microsoft 365 and Asana with an assistant, IT and Innovation, company laptop setup) |
 
 When a Brain is added, add its line here and its short name to the BRAINS secret (Brain Kit Recipe 1).
 Add the same line to the request form, `.github/ISSUE_TEMPLATE/request-access.yml`.
