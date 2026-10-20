@@ -187,8 +187,15 @@ def command():
         msg = f"Approved for @{who} ({level}): {', '.join(done) or 'none'}."
         if failed:
             msg += f" Could not add: {', '.join(failed)}."
-        msg += " Check your email or github.com/notifications for the invitation(s), then give your" \
-               " assistant the install sentence from each Brain's front page."
+        if done:
+            msg += ("\n\n**What to do next (about 5 minutes):**\n"
+                    "1. **Accept the invitation.** GitHub has emailed you one invitation per Brain. Open each"
+                    " email and click **Accept**. You can also find them at github.com/notifications.\n"
+                    "2. **Open the Brain.** After you accept, GitHub shows the Brain's front page.\n"
+                    "3. **Install it.** Under **Install**, copy the one sentence and paste it into Claude Code"
+                    " or Codex on your own computer. Your assistant asks a few questions and does the rest.\n\n"
+                    "You need a free GitHub account (you have one) and Claude Code or Codex on your computer."
+                    " The chat websites alone are not enough.")
         reply(msg)
         if done and not failed:
             finish("completed")
