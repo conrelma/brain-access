@@ -10,7 +10,7 @@ grow together.
 | `finance` | Company finance recipes (X3 connection, statements, cash flow, dashboards) |
 | `fleet` | Running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain) |
 | `yield` | Revenue management recipes (competitor fare tracking, yield and load factor methods) |
-| `lakehouse` | The company data lakehouse (connecting, tables, reports, reconciliation) |
+| `data` | Company data sources (lakehouse, FlightAware, adsb.lol, QlikView, airport statistics, Reporting Data): how to connect, what is there, which source wins, reconciliation |
 
 When a Brain is added, add its line here and its short name to the BRAINS secret (Brain Kit Recipe 1).
 Add the same line to the request form, `.github/ISSUE_TEMPLATE/request-access.yml`.
