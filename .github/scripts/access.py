@@ -34,6 +34,7 @@ import sys
 OWNER_ID = "6285991"
 USER = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
 BRAIN = re.compile(r"[a-z0-9-]{1,30}")
+FORM = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ISSUE_TEMPLATE", "request-access.yml")
 BRAIN_REPO = re.compile(r"conrelma/[A-Za-z0-9._-]{1,100}")
 FAILED = []  # gh steps that failed (Brain name and HTTP status only); any one makes the run red
 
@@ -323,6 +324,12 @@ def selftest():
     assert not any(x.startswith(("issue close", "issue lock")) for x in c)   # request stays open
     assert FAILED == ["invite fleet (HTTP 500)"]
     del FAILED[:]
+    # the request form's checkboxes start with a valid short name and a colon, e.g. "finance: ..."
+    with open(FORM) as f:
+        labels = re.findall(r'^\s*- label:\s*"?([^"\n]*)', f.read(), re.M)
+    assert labels, "no checkboxes found in the request form"
+    for label in labels:
+        assert BRAIN.fullmatch(label.split(":", 1)[0]), "bad Brain short name in the request form: " + label
     print("selftest ok")
 
 

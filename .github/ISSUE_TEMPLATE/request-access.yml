@@ -1,3 +1,5 @@
+# When a Brain is added, add its line here and its short name to the BRAINS secret (Brain Kit Recipe 1).
+# Each line starts with the short name and a colon; the selftest in .github/scripts/access.py checks it.
 name: Request access
 description: Ask for access to one or more Brains.
 title: "Access request"
@@ -12,8 +14,8 @@ body:
     attributes:
       label: Which Brains do you need?
       options:
-        - label: finance
-        - label: fleet
+        - label: "finance: company finance recipes (X3 connection, statements, cash flow, dashboards)"
+        - label: "fleet: running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain)"
   - type: input
     id: name
     attributes:
