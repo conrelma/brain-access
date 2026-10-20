@@ -13,7 +13,7 @@ body:
     id: brains
     attributes:
       label: Which Brains do you think you need?
-      description: The owner decides which Brains you get. Tick what fits your work; the owner may give you more or fewer.
+      description: The owner decides which Brains you get. Tick what fits your work; the owner may give you more or fewer. People outside the company can only get fleet.
       options:
         - label: "finance: company finance recipes (X3 connection, statements, cash flow, dashboards)"
         - label: "fleet: running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain)"

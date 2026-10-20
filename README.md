@@ -8,6 +8,7 @@ grow together.
 **Step 1. Ask for access.** Sign in to GitHub (a free account is fine), open
 [the request form](https://github.com/conrelma/brain-access/issues/new?template=request-access.yml),
 tick what fits your work, and write your first name. The owner decides which Brains you get.
+People outside the company can only get the `fleet` Brain; the other Brains are for company staff.
 
 **Step 2. When GitHub emails you that you are approved,** open Claude Code or Codex on your own
 computer and paste this:
