@@ -8,7 +8,7 @@ grow together.
 **Step 1. Ask for access.** Sign in to GitHub (a free account is fine), open
 [the request form](https://github.com/conrelma/brain-access/issues/new?template=request-access.yml),
 tick what fits your work, and write your first name. The owner decides which Brains you get.
-People outside the company can only get the `fleet` Brain; the other Brains are for company staff.
+People outside the company can only get the `fleet` and `hermes` Brains; the other Brains are for company staff.
 
 **Step 2. When GitHub emails you that you are approved,** open Claude Code or Codex on your own
 computer and paste this:
@@ -25,6 +25,7 @@ Claude Code or Codex on your own computer; the chat websites alone are not enoug
 |---|---|
 | `finance` | Company finance recipes (X3 connection, statements, cash flow, dashboards) |
 | `fleet` | Running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain) |
+| `hermes` | Installing, running and fixing Hermes Agent on Mac or Linux, Telegram, skills, memory (personal Brain) |
 | `yield` | Revenue management recipes (competitor fare tracking, yield and load factor methods) |
 | `data` | Company data sources (lakehouse, FlightAware, adsb.lol, QlikView, airport statistics, Reporting Data): how to connect, what is there, which source wins, reconciliation |
 | `general` | How the company makes things (brand, documents and decks, meetings and polls, Microsoft 365 and Asana with an assistant, IT and Innovation, company laptop setup) |
