@@ -13,12 +13,13 @@ body:
     id: brains
     attributes:
       label: Which Brains do you think you need?
-      description: The owner decides which Brains you get. Tick what fits your work; the owner may give you more or fewer. People outside the company can only get fleet.
+      description: The owner decides which Brains you get. Tick what fits your work; the owner may give you more or fewer. People outside the company can only get fleet and hermes.
       options:
         - label: "finance: company finance recipes (X3 connection, statements, cash flow, dashboards)"
         - label: "fleet: running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain)"
         - label: "yield: revenue management recipes (competitor fare tracking, yield and load factor methods)"
         - label: "data: company data sources (lakehouse, FlightAware, adsb.lol, QlikView, airport statistics, Reporting Data; how to connect, what is there, which source wins, reconciliation)"
+        - label: "hermes: installing, running and fixing Hermes Agent on Mac or Linux, Telegram, skills, memory (personal Brain)"
         - label: "general: how the company makes things (brand, documents and decks, meetings and polls, Microsoft 365 and Asana with an assistant, IT and Innovation, company laptop setup)"
   - type: input
     id: name
