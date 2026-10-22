@@ -44,7 +44,7 @@ Add the same line to the request form, `.github/ISSUE_TEMPLATE/request-access.ym
 3. Tick the Brains you need and type your first name.
 4. The owner gets an email and replies. A robot then sends you a GitHub invitation for each Brain
    approved. Accept it from your email or from github.com/notifications.
-5. Then give your AI assistant the install sentence from the Brain's front page.
+5. Then give your AI assistant the install sentence from the approval reply.
 
 **This page is public, and your request stays visible.** Write only your first name and tick the
 notebooks you need. Never write personal details, company details or anything private. GitHub keeps
