@@ -13,9 +13,8 @@ People outside the company can only get the `fleet` and `hermes` Brains; the oth
 **Step 2. When GitHub emails you that you are approved,** open the approval reply on your request.
 It ends with one install sentence that names each approved Brain, for example:
 
-> Install my new Brains for me: accept my pending GitHub invitations from conrelma for
-> conrelma/safair-data-brain only, then follow INSTALL.md in each one. Ask me only for what you
-> cannot do yourself.
+> Install my new Brains for me: accept my pending GitHub invitations from conrelma for the Brains
+> data only, then follow INSTALL.md in each one. Ask me only for what you cannot do yourself.
 
 Copy that sentence from your own reply, open Claude Code or Codex on your own computer and paste it.
 Your assistant accepts only the Brains it names.

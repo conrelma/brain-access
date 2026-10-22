@@ -192,7 +192,7 @@ def command():
             msg += ("\n\n**Install (about 5 minutes):** open Claude Code or Codex on your own computer and"
                     " paste this one sentence:\n\n"
                     f"> Install my new Brains for me: accept my pending GitHub invitations from {owner} for"
-                    f" {' and '.join(brains[n] for n in done)} only, then follow INSTALL.md in each one. Ask me"
+                    f" the Brains {' and '.join(done)} only, then follow INSTALL.md in each one. Ask me"
                     f" only for what you cannot do yourself.\n\n"
                     "Your assistant accepts the invitations, installs each Brain and asks a few questions. You can"
                     " also accept the invitations yourself from GitHub's emails or github.com/notifications.\n\n"
