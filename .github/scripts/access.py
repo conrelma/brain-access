@@ -191,8 +191,9 @@ def command():
             owner = os.environ.get("REPO", "/").split("/")[0]
             msg += ("\n\n**Install (about 5 minutes):** open Claude Code or Codex on your own computer and"
                     " paste this one sentence:\n\n"
-                    f"> Install my new Brains for me: accept my pending GitHub invitations from {owner} for these"
-                    f" Brains, then follow INSTALL.md in each one. Ask me only for what you cannot do yourself.\n\n"
+                    f"> Install my new Brains for me: accept my pending GitHub invitations from {owner} for"
+                    f" {' and '.join(brains[n] for n in done)} only, then follow INSTALL.md in each one. Ask me"
+                    f" only for what you cannot do yourself.\n\n"
                     "Your assistant accepts the invitations, installs each Brain and asks a few questions. You can"
                     " also accept the invitations yourself from GitHub's emails or github.com/notifications.\n\n"
                     "You need a free GitHub account (you have one) and Claude Code or Codex on your computer."
