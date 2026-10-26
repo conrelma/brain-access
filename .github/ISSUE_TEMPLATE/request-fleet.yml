@@ -1,0 +1,23 @@
+name: Join the Agent Fleet notes
+description: Ask for access to the Agent Fleet notes (running AI assistants at home).
+title: "Access request: fleet"
+labels: ["access-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This asks for the Agent Fleet notes: running AI assistants at home, plus a Start here track for setting up your own assistant.
+
+        This page is public and your request stays visible. Write only your first name. Write nothing private. GitHub keeps the edit history of a public issue, so editing it later does not hide anything.
+  - type: input
+    id: name
+    attributes:
+      label: Your first name (so the owner knows who you are)
+    validations:
+      required: true
+  - type: input
+    id: assistant
+    attributes:
+      label: Which AI assistant do you use? (for example Claude Code, Codex, Hermes or Cursor)
+    validations:
+      required: false
