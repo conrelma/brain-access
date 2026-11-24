@@ -28,7 +28,7 @@ Claude Code or Codex on your own computer; the chat websites alone are not enoug
 | Brain | What it holds |
 |---|---|
 | `finance` | Company finance recipes (X3 connection, statements, cash flow, dashboards) |
-| `fleet` | Running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain) |
+| `fleet` | Agent Brain: running AI assistants at home, plus a Start here track for setting up your own assistant (personal Brain) |
 | `hermes` | Installing, running and fixing Hermes Agent on Mac or Linux, Telegram, skills, memory (personal Brain) |
 | `yield` | Revenue management recipes (competitor fare tracking, yield and load factor methods) |
 | `data` | Company data sources (lakehouse, FlightAware, adsb.lol, QlikView, airport statistics, Reporting Data): how to connect, what is there, which source wins, reconciliation |
