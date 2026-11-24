@@ -1,12 +1,12 @@
-name: Join the Agent Fleet notes
-description: Ask for access to the Agent Fleet notes (running AI assistants at home).
+name: Join Agent Brain
+description: Ask for access to Agent Brain (formerly the Agent Fleet notes): running AI assistants at home.
 title: "Access request: fleet"
 labels: ["access-request"]
 body:
   - type: markdown
     attributes:
       value: |
-        This asks for the Agent Fleet notes: running AI assistants at home, plus a Start here track for setting up your own assistant.
+        This asks for Agent Brain (formerly the Agent Fleet notes): running AI assistants at home, plus a Start here track for setting up your own assistant.
 
         This page is public and your request stays visible. Write only your first name. Write nothing private. GitHub keeps the edit history of a public issue, so editing it later does not hide anything.
 
