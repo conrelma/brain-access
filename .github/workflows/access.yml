@@ -21,11 +21,12 @@ jobs:
     if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     steps:
-      - run: gh issue comment "$ISSUE" -R "$REPO" --body "Thank you. The owner has been notified and will reply here."
+      - run: gh issue comment "$ISSUE" -R "$REPO" --body "$MSG"
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
+          MSG: "Thank you. The owner has been notified and will reply here. If you have not yet, give your email address privately on this short form, never on this page: https://robust-saddle-2x4e.here.now/"
 
   command:
     if: >-
