@@ -9,6 +9,8 @@ body:
         This asks for the Agent Fleet notes: running AI assistants at home, plus a Start here track for setting up your own assistant.
 
         This page is public and your request stays visible. Write only your first name. Write nothing private. GitHub keeps the edit history of a public issue, so editing it later does not hide anything.
+
+        **Your email address (needed):** do not write it here. Give it privately on [this short form](https://robust-saddle-2x4e.here.now/). It goes only to the owner and is used to send you the Brain newsletter.
   - type: input
     id: name
     attributes:

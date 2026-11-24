@@ -9,6 +9,8 @@ body:
     attributes:
       value: |
         This page is public and your request stays visible. Write only your first name. Write nothing private: no personal or company details. GitHub keeps the edit history of a public issue, so editing it later does not hide anything.
+
+        **Your email address (needed):** do not write it here. Give it privately on [this short form](https://robust-saddle-2x4e.here.now/). It goes only to the owner and is used to send you the Brain newsletter.
   - type: checkboxes
     id: brains
     attributes:
